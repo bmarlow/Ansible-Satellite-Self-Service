@@ -1,0 +1,35 @@
+---
+- name: "Create a host"
+  hosts: all
+  collections:
+   - theforeman.foreman
+  tasks:
+
+  - name: "Create a host"
+    foreman_host:
+      username: "admin"
+      password: "changeme"
+      server_url: "https://satellite.example.com"
+      name: "my-test-host.example.com"
+      compute_resource: "virtualization-manager.example.com"
+      architecture: "x86_64"
+      build: true
+      domain: "example.com"
+      compute_profile: "Large"
+      organization: "Satellite_Org"
+      location: "Satellite_Location"
+      mac: "{{ 56 | random_mac }}"
+      ip: 10.200.0.20
+      root_pass: "changeme"
+      subnet: "10.200.0.0/24"
+      provision_method: "build"
+      lifecycle_environment: "Prod"
+      content_view: "RHEL 7"
+      operatingsystem: "RHEL Server 7.8"
+      ptable: "Kickstart default"
+      content_source: "satellite.example.com"
+      pxe_loader: "PXELinux BIOS"
+      kickstart_repository: "Red Hat Enterprise Linux 7 Server Kickstart x86_64 7.8"
+      validate_certs: no
+      state: present
+

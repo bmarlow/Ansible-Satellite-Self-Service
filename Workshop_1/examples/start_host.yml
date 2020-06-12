@@ -1,0 +1,16 @@
+---
+- name: "Power on Host"
+  hosts: all
+  collections:
+   - theforeman.foreman
+  tasks:
+
+  - name: "Start up host"
+    foreman_host_power:
+      username: "admin"
+      password: "changeme"
+      server_url: "https://satellite.example.com/"
+      name: "my-test-host.example.com"
+      state: on
+      validate_certs: no
+
