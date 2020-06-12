@@ -23,7 +23,7 @@ Useful hammer commands
 
 `hammer --help` # when you don't know exactly what you're looking for
 
-###Compute Resources
+### Compute Resources
 Compute Resources are analagous to your virtualization manager, and can include Red Hat Virtualization, Red Hat OpenStack, VMWare, Hyper-V, Google, AWS, Azure, and Libvirt.
 
 To configure these, throught the Satellite UI, navigate to **Infrastructure-->Compute Resources**, then select the appropriate provider and fill out the fields.  
@@ -32,7 +32,7 @@ To configure these, throught the Satellite UI, navigate to **Infrastructure-->Co
 
 A good approach for this would be to adopt a sensical naming architecture (even if unnessary at first) such as DC1-VirtManager1.example.com or Azure-West1-Tenant1.
 
-###Compute Profiles
+### Compute Profiles
 Compute profiles are analagous to what most cloud providers refer to as instance types, consisting of standardized CPU/RAM/Disk combinations.
 
 To configure these, through, the Satellite UI, navigate to **Infrastructure-->Compute Profiles** and create the appropriate profiles that your organization desires.  
@@ -179,7 +179,7 @@ Absolutely, let's address that now.
 - Subnet's and IP's
   - User's may not be familiar with subnet names/masks so the suggested approach would be to use common names and again use the dictionary mapping technique previously mentioned.
 
-###Shut up about dictionary mapping and show me
+### Shut up about dictionary mapping and show me
 Sheesh, fine.
 
 These can be imported as vars in any of the ways that is supported, but for the sake of simplicity we will do it in the vars section of our playbook.
@@ -215,7 +215,7 @@ These can be imported as vars in any of the ways that is supported, but for the 
 
 ```
 
-###Okay, so now we have a dictionary, how do we access these values?
+### Okay, so now we have a dictionary, how do we access these values?
 We map Survey response answers to keys in the dictionary, whose values correspond to what we actually need.
 
 So now we can call these by doing the following:
@@ -253,10 +253,10 @@ In the example above, assume the variable 'my_dc' gets choosen by the user from 
 
 This is a single example, however this can be done for each of the situations where we need to get information from a customer/user but they might not know the exact resource name.  
 
-###What about IP addresses?
+### What about IP addresses?
 Hopefully your organization uses some sort of IPAM that is programmable via an API (or better yet Ansible module).  In most cases this is typically something like InfoBlox.  In the instance of InfoBlox we would use the `nios_next_ip` module to retrieve the IP address and set it as a fact to later be used in the foreman_host module.
 
-###What about DNS?
+### What about DNS?
 Satellite can be used to automatically create DNS records, or DNS records can be created using one of the various DNS modules available from providers.  This will not be covered here as DNS providers vary widely.
 
 
