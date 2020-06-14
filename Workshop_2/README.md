@@ -293,7 +293,7 @@ Suggested survey criteria are as follows:
 
 ## TLDR: Finished Product Please?
 
-Goodnes, you folks are impatient.  Here is what the completed playboook should look like (for consumption in Tower), with a few caveats:
+Goodness, you folks are impatient.  Here is what the completed playboook should look like (for consumption in Tower), with a few caveats:
 
 
 **Caveat 1:** The token being used for netbox is assumed to be another custom credential type (just follow the previous directions for the Satellite creds, but only make one field, then create the creds and associate to the Job Template)
