@@ -111,7 +111,7 @@ Your final Custom Credential Type should look something like this (note that the
 **Subnet's and IP's**
   - User's may not be familiar with subnet names/masks so the suggested approach would be to use common names and again use the dictionary mapping technique previously mentioned in conjunction with an IPAM solution.
 
-## Shut up about dictionary mapping and show me
+## Shut up about dictionary mapping and show me!
 Sheesh, fine.
 
 These can be imported as vars in any of the ways that is supported, but for the sake of simplicity we will do it in the vars section of our playbook.
