@@ -291,4 +291,127 @@ Suggested survey criteria are as follows:
 
 
 
+## TLDR: Finished Product Please?
 
+Goodnes, you folks are impatient.  Here is what the completed playboook should look like (for consumption in Tower), with a few caveats:
+
+
+**Caveat 1:** The token being used for netbox is assumed to be another custom credential type (just follow the previous directions for the Satellite creds, but only make one field, then create the creds and associate to the Job Template)
+
+**Caveat 2:**  If you aren't using netbox for IPAM you'll have to adjust your playbook accordingly.
+```
+---
+- name: "Create a host"
+  hosts: all
+  collections:
+   - theforeman.foreman
+  vars:
+    compute_resources:
+      DC1: virtualization-manager-1.example.com
+      DC2: virtualization-manager-2.example.com
+    content_views:
+      RHEL7: "RHEL 7"
+      RHEL8: "RHEL 8"
+    kickstart_repos:
+      RHEL7_7: "Red Hat Enterprise Linux 7 Server Kickstart x86_64 7.7"
+      RHEL7_8: "Red Hat Enterprise Linux 7 Server Kickstart x86_64 7.8"
+      RHEL8_0: "Red Hat Enterprise Linux 8 for x86_64 - BaseOS Kickstart 8.0"
+      RHEL8_1: "Red Hat Enterprise Linux 8 for x86_64 - BaseOS Kickstart 8.1"
+      RHEL8_2: "Red Hat Enterprise Linux 8 for x86_64 - BaseOS Kickstart 8.2"
+    subnets:
+      app1_subnet: "192.168.100.0/24"
+      app2_subnet: "10.1.0.0/16"
+      dmz: "172.16.0.0/22"
+
+  tasks:
+    # lookup the virt manager based on the Data Center given in the survey
+  - name: "Lookup the Virtualization Manager for the DC"
+    set_fact:
+      compute_resource: "{{ item.value }}"
+    loop: "{{ lookup('dict', compute_resources) }}"
+    when: "'{{ requested_dc }}' in item.key"
+
+  # lookup the content view based on the OS version given in the survey
+  # strips the OS version to the Major rev number for matching with content view
+  - name: "Lookup Content View"
+    set_fact:
+      content_view: "{{ item.value }}"
+    loop: "{{ lookup('dict', content_views) }}"
+    when: "'{{ system_os.split(' ')[-1].split('.')[0] }}' in item.key"
+
+  # lookup the kickstart repo based on OS version given in the survey
+  - name: "Lookup Kickstart Repo"
+    set_fact:
+      kickstart_repo: "{{ item.value }}"
+    loop: "{{ lookup('dict', kickstart_repos) }}"
+    when: "'{{ system_os.split(' ')[-1].split('.')[0:] | join('_') }}' in item.key"
+
+  # lookup the network provided in the survey and map to real value
+  - name: "Lookup Subnet"
+    set_fact:
+      subnet: "{{ item.value }}"
+    loop: "{{ lookup('dict', subnets) }}"
+    when: "'{{ network }}' in item.key"
+
+  # gets the domain by slicing off the hostname from the servername string
+  - name: "Define domain"
+    set_fact:
+      domain: "{{ requested_server_name.split('.')[1:] | join('.') }}"
+
+  # gets the next available IP from netbox
+  - name: "Get next available IP in block"
+    netbox_ip_address:
+      netbox_url: http://netbox.example.com
+      netbox_token: "{{ netbox_token }}"
+      data:
+        prefix: "{{ subnet }}"
+        description: "{{ requested_server_name }}"
+      state: new
+    register: netbox_data
+
+  - name: "Create a host"
+    foreman_host:
+      username: "{{ satellite_user }}"
+      password: "{{ satellite_pw }}"
+      server_url: "https://satellite.example.com"
+      name: "{{ requested_server_name }}"
+      compute_resource: "{{ compute_resource }}"
+      architecture: "x86_64"
+      build: true
+      domain: "{{ domain }}"
+      compute_profile: "{{ instance_type }}"
+      organization: "{{ satellite_org }}"
+      location: "{{ satellite_location }}"
+      mac: "{{ '56' | random_mac }}"
+      ip: "{{ netbox_data.ip_address.address.split('/')[0] }}"
+      root_pass: "{{ new_server_root_pw }}"
+      subnet: "{{ subnet }}"
+      provision_method: "build"
+      lifecycle_environment: "{{ lifecycle_env }}"
+      content_view: "{{ content_view }}"
+      operatingsystem: "{{ system_os }}"
+      ptable: "Kickstart default"
+      content_source: "satellite.example.com"
+      pxe_loader: "PXELinux BIOS"
+      kickstart_repository: "{{ kickstart_repo }}"
+      validate_certs: no
+      state: present
+
+  - name: "Pause for Host creation prior to start"
+    pause:
+      seconds: 30
+
+  - name: "Start up host"
+    foreman_host_power:
+      username: "{{ satellite_user }}"
+      password: "{{ satellite_pw }}"
+      server_url: "https://satellite.example.com/"
+      name: "{{ requested_server_name }}"
+      state: on
+      validate_certs: no
+
+
+```
+
+## Now What?
+Now you should be able to launch that Job Template from within Tower fill out the survey, and get new machine!  Part three will cover how to get our machines properly subscribed and patched.
