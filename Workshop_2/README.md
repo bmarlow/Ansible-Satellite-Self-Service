@@ -257,7 +257,7 @@ Upon clicking the `Add Survey` button you will now be presented with a screen th
 
 Now we just need to create entries for each of the variables in our playbook that we wish to replace.
 
-##Wait!
+## Wait!
 
 Okay, so you've started looking at all of the variables and you have found that they are falling into 3 groups:
 1.  Variable values the user should be allowed to enter freeform
