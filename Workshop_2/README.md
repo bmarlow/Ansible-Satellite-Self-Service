@@ -1,4 +1,4 @@
-#PART 2: Using Tower
+# PART 2: Using Tower
 In our first section we set up Ansible to utilize Satellite's ability to create virtual machines.  That is great, but if that was where we stopped, we really just moved the work around a bit.  If we want to really step up our game here we need to get this work into Ansible Tower so that we can do things like auditing, sharing, variable replacement, and self-service.
 
 
