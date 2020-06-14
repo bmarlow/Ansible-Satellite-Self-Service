@@ -1,4 +1,4 @@
-#Ansible Workshops#
+# Ansible Workshops #
 
 - Workshop 1 - Ansible to Satellite Provisioning
 - Workshop 2 - Patching with Ansible

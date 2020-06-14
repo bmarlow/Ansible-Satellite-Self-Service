@@ -1,0 +1,34 @@
+---
+- name: "Create a host"
+  hosts: all
+  collections:
+   - theforeman.foreman
+  tasks:
+
+  - name: "Create a host"
+    foreman_host:
+      username: "{{ satellite_user }}"
+      password: "{{ satellite_pw }}"
+      server_url: "https://satellite.example.com"
+      name: "{{ requested_server_name }}"
+      compute_resource: "{{ compute_resource }}"
+      architecture: "x86_64"
+      build: true
+      domain: "{{ example.com }}"
+      compute_profile: "{{ compute_profile }}"
+      organization: "{{ satellite_org }}"
+      location: "{{ satellite_location }}"
+      mac: "{{ 56 | random_mac }}"
+      ip: "{{ server_ip }}"
+      root_pass: "{{ new-servers-root-pw }}"
+      subnet: "{{ subnet }}"
+      provision_method: "build"
+      lifecycle_environment: "{{ lifecycle_env }}"
+      content_view: "{{ content_view }}"
+      operatingsystem: "{{ operating_system }}"
+      ptable: "Kickstart default"
+      content_source: "satellite.example.com"
+      pxe_loader: "PXELinux BIOS"
+      kickstart_repository: "{{ kickstart_repo }}"
+      validate_certs: no
+      state: present

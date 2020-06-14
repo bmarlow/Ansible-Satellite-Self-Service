@@ -16,13 +16,13 @@
       RHEL7: "Red Hat Enterprise Linux 7"
       RHEL8: "Red Hat Enterprise Linux 8"
     kickstart_repos:
-      RHEL_7_7: "Red Hat Enterprise Linux 7 Server Kickstart x86_64 7.7"
-      RHEL_7_8: "Red Hat Enterprise Linux 7 Server Kickstart x86_64 7.8"
-      RHEL_8_0: "Red Hat Enterprise Linux 8 for x86_64 - BaseOS Kickstart 8.0"
+      RHEL7_7: "Red Hat Enterprise Linux 7 Server Kickstart x86_64 7.7"
+      RHEL7_8: "Red Hat Enterprise Linux 7 Server Kickstart x86_64 7.8"
+      RHEL8_0: "Red Hat Enterprise Linux 8 for x86_64 - BaseOS Kickstart 8.0"
     subnets:
-      App1_subnet: "192.168.100.0/24"
-      App2_subnet: "10.1.0.0/16"
-      DMZ: "172.16.0.0/22"
+      app1_subnet: "192.168.100.0/24"
+      app2_subnet: "10.1.0.0/16"
+      dmz: "172.16.0.0/22"
 
   tasks:
   - name: "Lookup the Virtualization Manager for the DC"
@@ -31,6 +31,21 @@
     loop: "{{ lookup('dict', compute_resources) }}"
     when: "'{{ my_dc }}' in item.key"
 
-  - name: "Print the fact"
-    debug:
-      msg: "{{ compute_resource }}"
+
+  - name: "Lookup Content View"
+    set_fact:
+      content_view: "{{ item.value }}"
+    loop: "{{ lookup('dict', content_views) }}"
+    when: "'{{ os_version.split("_")[0] }}' in item.key"
+
+  - name: "Lookup Kickstart Repo"
+    set_fact:
+      content_view: "{{ item.value }}"
+    loop: "{{ lookup('dict', kickstart_repos) }}"
+    when: "'{{ os_version }}' in item.key"
+
+  - name: "Lookup Content View"
+    set_fact:
+      content_view: "{{ item.value }}"
+    loop: "{{ lookup('dict', content_views) }}"
+    when: "'{{ os_version.split("_")[0] }}' in item.key"
