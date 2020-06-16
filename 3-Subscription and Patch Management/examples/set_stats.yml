@@ -1,0 +1,7 @@
+  # set stats that can be utilized by other jobs in workflow
+  - name: "Set stats vars"
+    set_stats:
+      data:
+        requested_server_name: "{{ requested_server_name }}"
+        activation_key: "{{ 'RHEL-' + system_os.split(' ')[-1].split('.')[0:] + '-' + lifecycle_env }}"
+      per_host: yes

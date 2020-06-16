@@ -291,6 +291,9 @@ Suggested survey criteria are as follows:
 
 
 
+Your finished survey should look relatively similar to this:
+![](./images/satellite_survey.png)
+
 ## TLDR: Finished Product Please?
 
 Goodness, you folks are impatient.  Here is what the completed playboook should look like (for consumption in Tower), with a few caveats:
