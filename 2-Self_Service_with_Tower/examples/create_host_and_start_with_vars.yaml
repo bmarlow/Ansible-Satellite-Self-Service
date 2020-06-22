@@ -1,0 +1,92 @@
+---
+- name: "Create a host"
+  hosts: all
+  collections:
+   - theforeman.foreman
+    vars:
+    compute_resources:
+      DC1: rhv.labgear.io
+      DC2: virtualization-manager-2.example.com
+    content_views:
+      RHEL7: "RHEL7"
+      RHEL8: "RHEL8"
+    kickstart_repos:
+      RHEL7_7: "Red Hat Enterprise Linux 7 Server Kickstart x86_64 7.7"
+      RHEL7_8: "Red Hat Enterprise Linux 7 Server Kickstart x86_64 7.8"
+      RHEL8_0: "Red Hat Enterprise Linux 8 for x86_64 - BaseOS Kickstart 8.0"
+    subnets:
+      app1_subnet: "192.168.100.0/24"
+      app2_subnet: "10.1.0.0/16"
+      dmz: "172.16.0.0/22"
+
+  tasks:
+    # lookup the virt manager based on the Data Center given in the survey
+  - name: "Lookup the Virtualization Manager for the DC"
+    set_fact:
+      compute_resource: "{{ item.value }}"
+    loop: "{{ lookup('dict', compute_resources) }}"
+    when: "'{{ my_dc }}' in item.key"
+
+  # lookup the content view based on the OS version given in the survey
+  - name: "Lookup Content View"
+    set_fact:
+      content_view: "{{ item.value }}"
+    loop: "{{ lookup('dict', content_views) }}"
+    when: "'{{ os_version.split("_")[0] }}' in item.key"
+
+  # lookup the kickstart repo based on OS version given in the survey
+  - name: "Lookup Kickstart Repo"
+    set_fact:
+      content_view: "{{ item.value }}"
+    loop: "{{ lookup('dict', kickstart_repos) }}"
+    when: "'{{ os_version }}' in item.key"
+
+  # lookup the network provided in the survey and map to real value
+  - name: "Lookup Subnet"
+    set_fact:
+      content_view: "{{ item.value }}"
+    loop: "{{ lookup('dict', subnets) }}"
+    when: "'{{ network }}' in item.key"
+
+  # gets the domain by slicing off the hostname from the servername string
+  - name: "Define domain"
+    set_fact:
+      domain: "{{ requested_server_name.split(".")[1:] }}"
+
+  - name: "Create a host"
+    foreman_host:
+      username: "{{ satellite_user }}"
+      password: "{{ satellite_pw }}"
+      server_url: "https://192.168.100.10"
+      name: "{{ requested_server_name }}"
+      compute_resource: "{{ compute_resource }}"
+      architecture: "x86_64"
+      build: true
+      domain: "{{ domain }}"
+      compute_profile: "{{ compute_profile }}"
+      organization: "{{ satellite_org }}"
+      location: "{{ satellite_location }}"
+      mac: "{{ 56 | random_mac }}"
+      ip: "{{ server_ip }}"
+      root_pass: "{{ new_server_root_pw }}"
+      subnet: "{{ subnet }}"
+      provision_method: "build"
+      lifecycle_environment: "{{ lifecycle_env }}"
+      content_view: "{{ content_view }}"
+      operatingsystem: "{{ operating_system }}"
+      ptable: "Kickstart default"
+      content_source: "satellite.example.com"
+      pxe_loader: "PXELinux BIOS"
+      kickstart_repository: "{{ kickstart_repo }}"
+      validate_certs: no
+      state: present
+
+  - name: "Start up host"
+    foreman_host_power:
+      username: "{{ satellite_user }}"
+      password: "{{ satellite_pw }}"
+      server_url: "https://satellite.example.com/"
+      name: "{{ requested_server_name }}"
+      state: on
+      validate_certs: no
+

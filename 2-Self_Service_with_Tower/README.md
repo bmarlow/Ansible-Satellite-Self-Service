@@ -15,7 +15,7 @@ Our ultimate goal is that our customers/users will be able to self-serve and cre
       compute_resource: "{{ compute_resource }}"
       architecture: "x86_64"
       build: true
-      domain: "{{ example.com }}"
+      domain: "{{ domain }}"
       compute_profile: "{{ compute_profile }}"
       organization: "{{ satellite_org }}"
       location: "{{ satellite_location }}"
@@ -41,7 +41,8 @@ Absolutely, let's address them now.
 
 **Satellite Username/PW**
 
-This can be handled by creating a custom credential-type in Tower that will store the Satellite Username/PW in an encrypted store, that can later be accessed as variables when that credential is associated to the Job Template.  The official documentation for Credential Types can be found here: <https://docs.ansible.com/ansible-tower/latest/html/userguide/credential_types.html#getting-started-with-credential-types>
+This can be handled by creating a custom credential-type in Tower that will store the Satellite Username/PW in an encrypted store, that can later be accessed as variables when that credential is associated to the Job Template.  The official documentation for Credential Types can be found here:
+<https://docs.ansible.com/ansible-tower/latest/html/userguide/credential_types.html#getting-started-with-credential-types>
 
 
 To create a Custom Credential type in the Ansible Tower UI go to **Credential Types-->+**.
@@ -96,8 +97,6 @@ This will make it so that the satellite_user and satellite_pw values will be acc
 
 Your final Custom Credential Type should look something like this (note that the Input Configuration is truncated due to the Tower UI):
 ![](./images/satellite_custom_credential_type.png)
-
-
 
 
 
@@ -197,7 +196,7 @@ In our example we will use netbox:
 ---truncated---  
   - name: "Get next available IP in block"
     netbox_ip_address:
-      netbox_url: http://192.168.100.5
+      netbox_url: http://netbox.example.com
       netbox_token: 7b0fa0b132379c782a58cd638e2413b3f4020eaf
       data:
         prefix: "{{ subnet }}"
@@ -218,7 +217,7 @@ Afterwords we can fill in the foreman_host block for the IP as follows:
     foreman_host:
       username: "{{ satellite_user }}"
       password: "{{ satellite_pw }}"
-      server_url: "https://192.168.100.10"
+      server_url: "https://satellite.example.com"
       name: "{{ requested_server_name }}"
       compute_resource: "{{ compute_resource }}"
       architecture: "x86_64"
@@ -235,7 +234,14 @@ Afterwords we can fill in the foreman_host block for the IP as follows:
 The reason for the split is because Netbox returns the IP address in the CIDR format, and Satellite just wants the dotted decimanl notation (Satellite discovers the mask from the Compute Profile which makes reference to the networks defined in Satellite).
 
 ## What about creating a DNS record?
-Satellite can be used to automatically create DNS records, or DNS records can be created using one of the various DNS modules available from providers.  This will not be covered here as DNS providers vary widely.
+Satellite can be used to automatically create DNS records, or DNS records can be created using one of the various DNS modules available from providers.  This will not be covered here as DNS providers vary widely.  A few modules that may be of interest:
+
+[nsupdate](https://docs.ansible.com/ansible/latest/modules/nsupdate_module.html#nsupdate-module)
+
+[win\_dns\_record](https://docs.ansible.com/ansible/latest/modules/win_dns_record_module.html#win-dns-record-module)
+
+[nios\_a\_record](https://docs.ansible.com/ansible/latest/modules/nios_a_record_module.html#nios-a-record-module)
+
 
 
 ## Making it available to consumers
@@ -417,4 +423,4 @@ Goodness, you folks are impatient.  Here is what the completed playboook should 
 ```
 
 ## Now What?
-Now you should be able to launch that Job Template from within Tower fill out the survey, and get new machine!  Part three will cover how to get our machines properly subscribed and patched.
+Now you should be able to launch that Job Template from within Tower fill out the survey, and get new machine!  Part three will cover how to adapt our work to accomodate a second, cloud-based provider.
