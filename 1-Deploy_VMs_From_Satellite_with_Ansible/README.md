@@ -3,7 +3,7 @@ Satellite has an excellent tool for provisioning machines, both from a physical 
 
 
 ## Satellite Prep
-Configuring Repository Syncs, Lifecycle Environments, and Content Views are the core concepts of Satellite, so it is assumed that those are already set up in for this process.
+Configuring Repository Syncs, Lifecycle Environments, and Content Views are core concepts of Satellite, so it is assumed that those are already set up in for this process.
 
 There are however a few things that require additional configuration:
 - Compute Resources
@@ -28,6 +28,16 @@ Compute Resources are analagous to your virtualization manager, and can include 
 
 To configure these, throught the Satellite UI, navigate to **Infrastructure-->Compute Resources**, then select the appropriate provider and fill out the fields.  
 
+While each of the hypervisor/provider types vary slightly in how you configure them, the fields are pretty self-explanitory.  
+
+Here is an example of what the Red Hat Virtualization Manager configuration looks like for our environment:
+![](./images/satellite_rhv_compute_resource.png)
+
+
+Here is an example of what the AWS region configuration looks like:
+![](./images/satellite_aws_compute_resource.png)
+
+
 **You will need to repeat this process for each unique manager/datacenter combo for hypervisors and for each region for cloud providers**
 
 A good approach for this would be to adopt a sensical naming architecture (even if unnessary at first) such as DC1-VirtManager1.example.com or Azure-West1-Tenant1.
@@ -35,8 +45,25 @@ A good approach for this would be to adopt a sensical naming architecture (even 
 ### Compute Profiles
 Compute profiles are analagous to what most cloud providers refer to as instance types, consisting of standardized CPU/RAM/Disk combinations.
 
+By default Satellite ships with 3 flavors (Small, Medium, Large).  Since different providers have different configuration options, you will notice that each Compute Profile will have a configuration sections for each Compute Resource that you have configured:
+![](./images/satellite_compute_profiles.png)
+
+
 To configure these, through, the Satellite UI, navigate to **Infrastructure-->Compute Profiles** and create the appropriate profiles that your organization desires.  
 *Note: remember the purpose of automation is to handle MOST of your cases, not necessarily all of them. Keep the number of compute profiles you have to match your most common use cases.*
+
+**For the first few exercises we are going to be focused at on-premise environment-type providers (RHV,VMware).**
+
+**There are addtional steps required for cloud providers that will be covered at a later point**
+
+Here is an example of what a large compute profile for our RHV instance might look like:
+
+![](./images/satellite_compute_profile_rhv_large.png)
+
+A couple of important items:
+- 4GB of RAM is typically required for Kickstarts (when using an HTTP based repo)
+- We are defining and attaching a network interface to the VM
+- We are creating and attaching a blank disk to the VM and making it bootable
 
 
 ## Enter The Foreman Modules
@@ -61,7 +88,7 @@ For the module to work properly there are a few python dependencies that must be
 These can be installed via pip:
 `sudo pip3 install apypie`
 
-**(this should be performed on all Ansible Tower application nodes)**
+**(this should be performed on all Ansible Tower application nodes, for future use)**
 
 
 ## Using The Modules
@@ -101,6 +128,8 @@ A basic play for creating a server might look like this:
       state: present
 
 ```
+**If unsure of names/values for certain parameters, I suggest referencing the hammer commands listed earlier**
+
 After running this playbook we will see that a couple of things have been accomplished:
 - A host was created in Satellite, and assigned all of the appropriate information (Org, Location, Lifecycle Enviornment, Content View, etc)
 - A host was created in our virtualization environment, but not turned on
