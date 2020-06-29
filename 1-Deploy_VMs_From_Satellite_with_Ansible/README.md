@@ -93,7 +93,7 @@ The benefit of this is that we can now have access to all of our provisioned mac
 ## Enter The Red Hat Satellite collection
 Red Hat has several certified collections in Ansible that are both vetted and officially supported by Red Hat.  By utilizing Ansible modules for Satellate we can take an automated approach towards accessing the functions provided by it.
 
-## Installing the Collction
+## Installing the Collection
 By default these collections are not distributed with Ansible, so we will need to install them.
 
 First we will need to update our ansible.cfg file with appropriate tokens for access to the Red Hat Certified collecitons.
