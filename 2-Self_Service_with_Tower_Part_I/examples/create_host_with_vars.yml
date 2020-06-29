@@ -35,7 +35,7 @@
         - name: subscription_manager
           value: yes
         - name: subscription_manager_certpkg_url
-          value: https://satellite.labgear.io/pub/katello-ca-consumer-latest.noarch.rpm
+          value: https://satellite.example.com/pub/katello-ca-consumer-latest.noarch.rpm
         - name: redhat_install_host_tools
           value: yes
         - name: redhat_install_agent
@@ -45,13 +45,11 @@
         - name: activation_key
           value: RHEL-8-Prod
         - name: http-proxy
-          value: squid.labgear.io
+          value: proxy.example.com
         - name: http-proxy-port
           value: 3128
         - name: http-proxy-user 
           value: sat_squid_user
         - name: http-proxy-password
-          value: OWRmNzE4N2RkYzdkYzkyZWE2NTc3YWRj
-        - name: foo
-          value: yes
+          value: "{{ squid_pw }}"
       state: present
