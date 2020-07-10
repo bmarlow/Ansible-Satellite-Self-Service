@@ -16,6 +16,7 @@ In the Satellite UI Navigate to **Infrastructure-->Compute Resources** and click
 You will notice that the options are a bit different than they were when we created the RHV/VMware resource.  Most of the fields are pretty self-explanitory, the most important field is the **Region** field.  As you may have guessed, you'll have to create a Compute Resource for each region within AWS.  This is a bit of a headache, but is more a result of the way that AWS has designed their infrastructure to be resiliant and regionalized at all levels (vs a poor UI design).
 
 A completed Compute Resouce configuration may looks similar to this:
+
 ![](./images/satellite_aws_compute_resource.png)
 
 Once the Compute Resource has been created you should be presented with a screen similar to this:
@@ -59,7 +60,7 @@ Part of the default provisioning templates in Satellite look for Remote Executio
 
 There are three parameters that need to be set:
 1. remote_execution_ssh_user (this is set as a string and the name of our service account)
-2. remote_execution_cretae_user (this is set as a string to 'true')
+2. remote_execution_create_user (this is set as a string to 'true')
 3. remote_execution_ssh_keys (this is set as an array and has our ssh keys in the BASH array format, eg ['value1', 'value2'])
 
 For our purposes we will define these at the Organization level (for maximum simplicity).
@@ -74,4 +75,92 @@ Once in the 'Edit' context, go to **Parameters** and enter the following data (w
 | remote_execution_ssh_user    | string | service_account   |
 | remote_execution_ssh_keys    | array  | ['pub key value'] |
 
-**It is important to note, that part of the default process for many cloud providers is to apply all updates
+Now that we have all of this set up, let's take a look at what an updated playbook might look like:
+
+```
+---truncated---
+
+- name: "Create a host"
+  host:
+    username: "{{ satellite_user }}"
+    password: "{{ satellite_pw }}"
+    server_url: "https://satellite.example.com"
+    name: "{{ requested_server_name }}"
+    compute_resource: "{{ compute_resource }}"
+    architecture: "x86_64"
+    domain: "{{ domain }}"
+    compute_profile: "{{ instance_type }}"
+    organization: "{{ satellite_org }}"
+    location: "{{ satellite_location }}"
+    root_pass: "{{ new_server_root_pw }}"
+    provision_method: "image"
+    lifecycle_environment: "{{ lifecycle_env }}"
+    content_view: "{{ content_view }}"
+    operatingsystem: "{{ system_os }}"
+    content_source: "satellite.example.com"
+    kickstart_repository: "{{ kickstart_repo }}"
+    parameters:
+      - name: subscription_manager
+        value: yes
+      - name: subscription_manager_certpkg_url
+        value: https://satellite.example.com/pub/katello-ca-consumer-latest.noarch.rpm
+      - name: redhat_install_host_tools
+        value: yes
+      - name: redhat_install_agent
+        value: yes
+      - name: subscription_manager_org
+        value: "{{ satellite_org }}"
+      - name: activation_key
+        value: "{{ activation_key }}"
+      - name: http-proxy
+        value: squid.labgear.io
+      - name: http-proxy-port
+        value: 3128
+      - name: http-proxy-user 
+        value: sat_squid_user
+      - name: http-proxy-password
+        value: "{{ sat_squid_user_password }}"
+    state: present
+  async: 1800
+  poll: 0
+  register: host_create
+
+- name: "check deployment status"
+  async_status:
+    jid: "{{ host_create.ansible_job_id }}"
+  register: job_status
+  until: job_status.finished
+  retries: 1000
+  delay: 10
+
+---truncated---
+```
+*Note, in the RedHat.Satellite Ansible collection 1.0, there is a bug where parameters will be set after the host creation, this causes finish templates to not appropriately render, so to accomodate those settings you will want to use other various modules to accomplish those means.  For tracking the bugzilla is [1855008](https://bugzilla.redhat.com/show_bug.cgi?id=1855008).*
+
+As we look through the playbook, we will notice a few things are different:
+- Certain arguments don't exist because they aren't applicable in a cloud environment
+- Heavy use of host parameters
+- The job being made asynchronous
+
+## Missing arguments ##
+Certain things aren't applicable or choosable in a cloud environment, like a specific IP or MAC address.  This should be somewhat self explanitory.
+
+What may not be as clear is the fact that we don't define a subnet/network for our host.  The reason for this is that it is defined by the compute resource we are using.  (yes, if you wish to provide the ability to provision to multiple subnets, you will need to create a Compute Resource for each).
+
+## Heavy use of host paramters ##
+When we deploy using a kickstart, hosts are auto-registered and subscribed to Satellite.  However when we deploy in the cloud we don't have that option, so we can make use of host parameters to handle this for us in our finish template.  We won't be covering finish templates here, however a good place to get educated about them is in the docs, [here](https://access.redhat.com/documentation/en-us/red_hat_satellite/6.7/html/provisioning_guide/provisioning_cloud_instances_in_amazon_ec2#configuring_a_finish_template_for_an_amazon_web_service_ec2_environment).
+
+## The job has been made asynchronous ##
+With a kickstart job, Satellite is quickly able to determine the status and progress of the machine being deployed.  When we deploy to the cloud there are several steps that occur, and Satellite will not respond back from the Ansible job until they finish, which can potentially take 10+ minutes depending on the image and instance type.
+
+To address this we make the call asynchronous, and then have a follow up task that checks the status of the previous task every 10 seconds, until it has successfuly completed.  This is namely to avoid running into a job timeout scenario.
+
+## But what about logging in as a user?  Root SSH access isn't allowed by most cloud providers... ##
+Talk about how to create a user and upload ssh key here.
+
+## Ensuring flexibility ##
+Put stuff here about the block statements.
+
+## Let's get to provisioning! ###
+Tie the provisioning process together.
+
