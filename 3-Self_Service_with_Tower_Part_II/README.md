@@ -137,6 +137,8 @@ Now that we have all of this set up, let's take a look at what an updated playbo
 ```
 *Note, in the RedHat.Satellite Ansible collection 1.0, there is a bug where parameters will be set after the host creation, this causes finish templates to not appropriately render, so to accomodate those settings you will want to use other various modules to accomplish those means.  For tracking the bugzilla is [1855008](https://bugzilla.redhat.com/show_bug.cgi?id=1855008).*
 
+*Please examine the examples folder for playbooks that illustrate how to work around this bug.*
+
 As we look through the playbook, we will notice a few things are different:
 - Certain arguments don't exist because they aren't applicable in a cloud environment
 - Heavy use of host parameters
@@ -156,10 +158,125 @@ With a kickstart job, Satellite is quickly able to determine the status and prog
 To address this we make the call asynchronous, and then have a follow up task that checks the status of the previous task every 10 seconds, until it has successfuly completed.  This is namely to avoid running into a job timeout scenario.
 
 ## But what about logging in as a user?  Root SSH access isn't allowed by most cloud providers... ##
-Talk about how to create a user and upload ssh key here.
+Touché.
+
+When considering how we'd like to do this approach, I think it makes the most sense to make it consistent across your environments.  You might be able to allow root SSH access to an on-premise VM, however you may not be able to do the same on a cloud VM.  (Also, why are you still logging in as root?)
+
+We already have the management account locked down as part of the provisioning process which we covered earlier in the post.  Now it makes sense to do this for our customer as well.
+
+The easiest way to do this, while maintaining flexibility would be to create a playbook that creates a remote user account (with sudo access, for admin privs), and then set both the password for that account as well as taking a public key for the user's ssh login.
+
+First, let's create the account and set the password:
+```
+---
+- name: create remote user 
+  user: 
+    name: "{{ customer_user_name }}"
+    group: wheel
+    password: "{{ customer_user_password | password_hash('sha512') }}"
+
+```
+
+Pretty straightforward right?  
+
+Now, let's go ahead and put their ssh public key in there
+
+```
+- name: validate and/or create .ssh directory
+  file:
+    path: "/home/{{ customer_user_name }}/.ssh/"
+    state: directory
+    mode: '0700'
+    owner: "{{ customer_user_name }}"
+    group: wheel
+
+- name: copy remote user rsa public key
+  authorized_key:
+    user: "{{ customer_user_name }}"
+    state: present
+    key: "{{ ssh_pub_key }}"
+```
+
+Now, in order to capture these new variables, we will be updating our Ansible survey, it should now consist of the following fields:
+
+| Prompt               | Answer Variable Name  | Answer Type                     | 
+| ------               | --------------------  | -----------                     |
+| Server Name          | requested_server_name | Text                            |
+| Data Center          | requested_dc          | Multiple Choice (single select) |       
+| Organization         | satellite_org         | Multiple Choice (single select) |
+| Location             | satellite_location    | Multiple Choice (single select) |
+| Environment          | lifecycle_env         | Multiple Choice (single select) |
+| Instance Type        | instance_type         | Multiple Choice (single select) |
+| OS Version           | system_os             | Multiple Choice (single select) |
+| User Name            | customer_user_name    | Text                            |
+| User Password        | customer_user_password| Password                        |
+| User SSH Public Key  | customer_ssh_pub_key  | Text                            |
+
+If you were paying attention, you'll notice that we've removed the root password field.  This is because we are now creating a service account for the Ansible access, and the user has now created an account with sudo access, so setting a root password isn't necessary.
+
+That being said, kickstarts may still require a root password to be set, so we'll want to update our host creation playbook and randomly generate the root password.  In the host module:
+
+`root_pass: "{{ new_server_root_pw }}"`
+
+will become:
+
+`root_pass: "{{ lookup('password', '/tmp/passwordfile chars=ascii_letters length=16') }}"`
 
 ## Ensuring flexibility ##
-Put stuff here about the block statements.
+Now, we've created at least two different provisioning methods (kickstart, cloud).  However, the user/customer doesn't care, and shouldn't need to know the difference, so let's hide that complexity from them and make our playbook a bit more robust.
+
+Enter conditionals and block statements.  We know that there a few steps that we want to perform on prem, and that those are likely different than those of the cloud.  Given this information we can create two logical blocks in our playbook, one for cloud, one for kickstarts.
+
+It's as easy as:
+
+```
+---truncated---
+- name: "Create and power up RHV Guest"
+  block:
+    # gets the next available IP from netbox
+    - name: "Get next available IP in block"
+      netbox_ip_address:
+        netbox_url: http://netbox.example.com
+        netbox_token: 7b0fa0b132379c782a58cd638e2413b3f4020eaf
+        data:
+          prefix: "{{ subnet }}"
+          description: "{{ requested_server_name }}"
+        state: new
+      register: netbox_data
+    
+    - name: "Create RHV Guest"
+      host:
+        username: "{{ satellite_user }}"
+        password: "{{ satellite_pw }}"
+        server_url: "https://satellite.example.com"
+        name: "{{ requested_server_name }}"
+        compute_resource: "{{ compute_resource }}"
+---truncated---
+  when: compute_resource == "rhv.example.com"
+
+
+
+---truncated---
+- name: Deploy EC2 Guest
+  block:
+      #when deploy a machine to EC2
+  - name: "Create a host"
+    host:
+      username: "{{ satellite_user }}"
+      password: "{{ satellite_pw }}"
+      server_url: "https://satellite.example.com"
+      name: "{{ requested_server_name }}"
+      compute_resource: "{{ compute_resource }}"
+      architecture: "x86_64"
+      domain: "{{ domain }}"
+      compute_profile: "{{ instance_type }}"
+      organization: "{{ satellite_org }}"
+---truncated---
+    when: "'aws' in compute_resource"
+
+
+```
+
 
 ## Let's get to provisioning! ###
 Tie the provisioning process together.

@@ -430,8 +430,18 @@ Goodness, you folks are impatient.  Here is what the completed playboook should 
       state: on
       validate_certs: no
 
+  - name: "Wait for SSH to start"
+    wait_for:
+      port: 22
+      host: '{{ requested_server_name }}'
+      delay: 60
+      timeout: 30000
+    connection: local
+
 
 ```
+
+You may have noticed that we snuck a wait statement in there.  The reason for this is so that if we have subsequent jobs in our Tower workflow, they aren't broken by trying to connect to our newly defined host before it has finished its installation.
 
 ## Now What?
 Now you should be able to launch that Job Template from within Tower, fill out the survey, and get new machine!  Part three will cover how to adapt our work to accommodate a second, cloud-based provider.
