@@ -1,0 +1,22 @@
+---
+- name: "Install Satellite CA Cert package"
+  hosts: all
+  tasks:
+  - name: Download and install a copy of the CA Certificate for the Red Hat Satellite 6 server (RHEL 8)
+    dnf:
+      name: https://satellite.example.com/pub/katello-ca-consumer-latest.noarch.rpm
+      disable_gpg_check: yes
+      lock_timeout: 1200
+      validate_certs: no
+      state: present
+    when: ansible_distribution_major_version == "8"
+
+
+  - name: Install katello-agent for RHEL 6 & 7
+    yum:
+      name: https://satellite.example.com/pub/katello-ca-consumer-latest.noarch.rpm
+      disable_gpg_check: yes
+      lock_timeout: 1200
+      validate_certs: no
+      state: present
+    when: ansible_distribution_major_version == "6" or ansible_distribution_major_version == "7"

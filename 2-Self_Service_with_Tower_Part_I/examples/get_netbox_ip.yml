@@ -1,0 +1,17 @@
+---
+- name: "Get Next IP"
+  hosts: all
+  tasks:
+
+  - name: "Start up host"
+    netbox_ip_address:
+      netbox_url: http://192.168.100.5
+      netbox_token: 7b0fa0b132379c782a58cd638e2413b3f4020eaf
+      data:
+        prefix: 192.168.100.0/24
+      state: new
+    register: netbox_data
+
+  - name: "print IP"
+    debug:
+      var: netbox_data.ip_address.address

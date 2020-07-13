@@ -1,0 +1,23 @@
+---
+- name: "copy user data"
+  hosts: "{{ requested_server_name }}"
+  tasks:
+  - name: create remote user 
+    user: 
+      name: "{{ customer_user_name }}"
+      group: wheel
+      password: "{{ customer_user_password | password_hash('sha512') }}"
+
+  - name: validate and/or create .ssh directory
+    file:
+      path: "/home/{{ customer_user_name }}/.ssh/"
+      state: directory
+      mode: '0700'
+      owner: "{{ customer_user_name }}"
+      group: wheel
+
+  - name: copy remote user rsa public key
+    authorized_key:
+      user: "{{ customer_user_name }}"
+      state: present
+      key: "{{ customer_ssh_pub_key }}"

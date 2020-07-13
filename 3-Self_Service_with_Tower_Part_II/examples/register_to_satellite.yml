@@ -1,0 +1,16 @@
+---
+- name: "Register with Satellite (RHV)"
+  hosts: all
+  tasks:
+
+  # consumer_name is important in cloud environment to prevent hostname registration mismatches
+  - name: Register with Satellite
+    redhat_subscription:
+      state: present
+      activationkey: my_activation_key
+      org_id: my_satellite_org
+      consumer_name: my_hosts_name
+      server_proxy_hostname: my-proxy-hostname.example.com
+      server_proxy_port: 1234
+      server_proxy_user: my-proxy-username
+      server_proxy_password: my-proxy-password
