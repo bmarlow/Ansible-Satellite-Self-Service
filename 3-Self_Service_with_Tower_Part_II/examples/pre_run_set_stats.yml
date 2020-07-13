@@ -1,0 +1,69 @@
+---
+- name: "Create a host"
+  hosts: all
+  connection: local
+  collections:
+   - theforeman.foreman
+  vars:
+    compute_resources:
+      RHV: rhv.labgear.io
+      AWS_US_WEST_2: aws-us-west-2
+    content_views:
+      RHEL7: "RHEL 7"
+      RHEL8: "RHEL 8"
+    kickstart_repos:
+      RHEL7_7: "Red Hat Enterprise Linux 7 Server Kickstart x86_64 7.7"
+      RHEL7_8: "Red Hat Enterprise Linux 7 Server Kickstart x86_64 7.8"
+      RHEL8_0: "Red Hat Enterprise Linux 8 for x86_64 - BaseOS Kickstart 8.0"
+      RHEL8_1: "Red Hat Enterprise Linux 8 for x86_64 - BaseOS Kickstart 8.1"
+      RHEL8_2: "Red Hat Enterprise Linux 8 for x86_64 - BaseOS Kickstart 8.2"
+    subnets:
+      app1_subnet: "192.168.100.0/24"
+      app2_subnet: "10.1.0.0/16"
+      dmz: "172.16.0.0/22"
+
+  tasks:
+  # lookup the virt manager based on the Data Center given in the survey
+  - name: "Lookup the Virtualization Manager for the DC"
+    set_stats:
+      data:
+        compute_resource: "{{ item.value }}"
+    loop: "{{ lookup('dict', compute_resources) }}"
+    when: requested_dc in item.key
+
+  # lookup the content view based on the OS version given in the survey
+  # strips the OS version to the Major rev number for matching with content view
+  - name: "Lookup Content View"
+    set_stats:
+      data:
+        content_view: "{{ item.value }}"
+    loop: "{{ lookup('dict', content_views) }}"
+    when: system_os.split(' ')[-1].split('.')[0] in item.key
+
+  # lookup the kickstart repo based on OS version given in the survey
+  - name: "Lookup Kickstart Repo"
+    set_stats:
+      data:
+        kickstart_repo: "{{ item.value }}"
+    loop: "{{ lookup('dict', kickstart_repos) }}"
+    when: system_os.split(' ')[-1].split('.')[0:] | join('_') in item.key
+
+  # lookup the network provided in the survey and map to real value
+  - name: "Lookup Subnet"
+    set_stats:
+      data:
+        subnet: "{{ item.value }}"
+    loop: "{{ lookup('dict', subnets) }}"
+    when: network in item.key
+
+  # gets the domain by slicing off the hostname from the servername string
+  - name: "Define domain"
+    set_stats:
+      data:
+        domain: "{{ requested_server_name.split('.')[1:] | join('.') }}"
+
+  # set activation key
+  - name: "Define Activation Key"
+    set_stats:
+      data:
+        activation_key: "{{ 'RHEL-' + system_os.split(' ')[-1].split('.')[0] + '-' + lifecycle_env }}"

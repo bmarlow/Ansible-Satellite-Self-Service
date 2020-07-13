@@ -237,7 +237,7 @@ It's as easy as:
     - name: "Get next available IP in block"
       netbox_ip_address:
         netbox_url: http://netbox.example.com
-        netbox_token: 7b0fa0b132379c782a58cd638e2413b3f4020eaf
+        netbox_token: "{{ netbox_token }}"
         data:
           prefix: "{{ subnet }}"
           description: "{{ requested_server_name }}"
@@ -278,6 +278,20 @@ It's as easy as:
 ```
 
 
-## Let's get to provisioning! ###
-Tie the provisioning process together.
+## Let's take on last look... ##
+Now that we've got all of this stuff configured we need to create the appropriate jobs and link them together in our workflow.  Once the templates have been created we will want to tie them all together in our workflow.  The finished one should look something like this:
+![](./images/final_workflow.png)
 
+You should make sure that when you executing the jobs that create the user data or do yum/dnf updates are using your shiny new service account to log in.
+
+And our finished survey should look something like this:
+![](./images/final_survey.png)
+
+
+## Now enjoy the fruits of your labor! ##
+Go ahead, launch that workflow.  You will get the same experiece on both cloud and on-prem installations.  The service account will be created, it will then be used to deploy our new user data and do an update.  Once the job is finished, you customer will be able to log in with their SSH key.
+
+You've done the hard work.  Just two more steps.
+
+- Tell your manager you deserve a promotion
+- Grab a beer
