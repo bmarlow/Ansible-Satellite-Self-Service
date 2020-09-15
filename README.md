@@ -1,6 +1,6 @@
 # Ansible Satellite Provisioning Workshop #
 
-The purpose of this repository is to give you a (relatively) in-depth view to the processes needed to allow customers to have self-sevice for provisioning virtual machines via Satellite, with Ansible, whether that be on-premise Kickstarts, or cloud instances in AWS/Azure/GCP/etc.
+The purpose of this repository is to give you a (relatively) in-depth view to the processes needed to allow customers to have self-sevice for provisioning virtual machines via Satellite, with Ansible, whether that be on-premise Kickstarts, or cloud instances in AWS/Azure/GCP/etc- the ultimate goal being that a user should have a singular experience when requesting a virtual machine regardless of the underlaying infrastructure.
 
 Each workshop name has a fairly detailed walkthrough on how to achieve the objective, as well as a directory with some examples to help you get started.
 
