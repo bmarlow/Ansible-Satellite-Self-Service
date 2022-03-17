@@ -96,9 +96,9 @@ Red Hat has several certified collections in Ansible that are both vetted and of
 ## Installing the Collection
 By default these collections are not distributed with Ansible, so we will need to install them.
 
-First we will need to update our ansible.cfg file with appropriate tokens for access to the Red Hat Certified collecitons.
+First we will need to update our ansible.cfg file with appropriate tokens for access to the Red Hat Certified collections.
 
-Go to <https://cloud.redhat.com> and navigate to **Automation Hub**.  From there click the 'satellite' colleciton.  In the top right there is a button that says **Get API token**, click that.  Click **Load token** then copy the long string provided.
+Go to <https://cloud.redhat.com> and navigate to **Automation Hub**.  From there click the 'satellite' collection.  In the top right there is a button that says **Get API token**, click that.  Click **Load token** then copy the long string provided.
 
 Now, edit your /etc/ansible.cfg file, so that it looks similar:
 ```
